@@ -11,7 +11,8 @@ convert_input_format = eplus_dir / 'ConvertInputFormat'
 
 helper = EPlusAPIHelper(eplus_dir)
 api = helper.get_api_instance()
-state = api.state_manager.new_state()
+state_1 = api.state_manager.new_state()
+state_2 = api.state_manager.new_state()
 
 current_dir = Path(__file__).parent
 idf_to_run = Path(helper.path_to_test_file('5ZoneAirCooled.idf'))
@@ -41,8 +42,8 @@ print("Modified JSON and rewrote to new file")
 # run EnergyPlus with the baseline and modified JSON files
 output_dir_baseline = current_dir / 'output_baseline'
 output_dir_secondary = current_dir / 'output_secondary'
-api.runtime.run_energyplus(state, ['-D', baseline_json.__str__(), '-d', output_dir_baseline.__str__()])
-api.runtime.run_energyplus(state, ['-D', modified_json.__str__(), '-d', output_dir_secondary.__str__()])
+api.runtime.run_energyplus(state_1, ['-D', baseline_json.__str__(), '-d', output_dir_baseline.__str__()])
+api.runtime.run_energyplus(state_2, ['-D', modified_json.__str__(), '-d', output_dir_secondary.__str__()])
 print("Ran EnergyPlus with baseline JSON input file.")
 
 make_archive('baseline', 'zip', root_dir=output_dir_baseline)
