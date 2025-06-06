@@ -41,8 +41,8 @@ print("Modified JSON and rewrote to new file")
 # run EnergyPlus with the baseline and modified JSON files
 output_dir_baseline = current_dir / 'output_baseline'
 output_dir_secondary = current_dir / 'output_secondary'
-api.runtime.run_energyplus(state, ['-D', baseline_json, '-d', output_dir_baseline])
-api.runtime.run_energyplus(state, ['-D', modified_json, '-d', output_dir_secondary])
+api.runtime.run_energyplus(state, ['-D', baseline_json.__str__(), '-d', output_dir_baseline.__str__()])
+api.runtime.run_energyplus(state, ['-D', modified_json.__str__(), '-d', output_dir_secondary.__str__()])
 print("Ran EnergyPlus with baseline JSON input file.")
 
 make_archive('baseline', 'zip', root_dir=output_dir_baseline)
