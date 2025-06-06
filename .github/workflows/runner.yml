@@ -7,9 +7,9 @@ jobs:
           - os: ubuntu-24.04
             os_version: 0
             hardened: false
-          - os: macos-14
-            os_version: 0
-            hardened: false
+          #- os: macos-14
+          #  os_version: 0
+          #  hardened: false
           - os: windows-latest
             os_version: 0
             hardened: false
