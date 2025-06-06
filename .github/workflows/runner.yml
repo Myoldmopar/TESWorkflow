@@ -1,0 +1,37 @@
+on: [push]
+jobs:
+  run_tes_workflow:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            os_version: 0
+            hardened: false
+          - os: macos-14
+            os_version: 0
+            hardened: false
+          - os: windows-latest
+            os_version: 0
+            hardened: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: 3.14
+      - name: EnergyPlus Install Script
+        id: eplus
+        uses: myoldmopar/energyplus-install@v0.3
+        with:
+          tag: 'v25.1.0'
+          hardened: ${{ matrix.hardened }}
+          os_version_override: ${{ matrix.os_version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Try to run E+ with full path
+        run: ${{ steps.eplus.outputs.energyplus_directory }}/energyplus -D ${{ steps.eplus.outputs.energyplus_directory }}/ExampleFiles/1ZoneUncontrolled.idf
+      - name: Install API Helper
+        run: pip install energyplus_api_helpers
+      - name: Try to run E+ from API
+        run: python main.py ${{ steps.eplus.outputs.energyplus_directory }}
