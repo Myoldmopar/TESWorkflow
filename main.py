@@ -1,16 +1,11 @@
-# This is a sample Python script.
+from pathlib import Path
+from sys import argv
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from energyplus_api_helpers.import_helper import EPlusAPIHelper
 
+eplus_dir = argv[1]
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+helper = EPlusAPIHelper(Path(eplus_dir))
+api = helper.get_api_instance()
+state = api.state_manager.new_state()
+return_value = api.runtime.run_energyplus(state, ['-D', helper.path_to_test_file('5ZoneAirCooled.idf')])

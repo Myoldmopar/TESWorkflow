@@ -32,6 +32,6 @@ jobs:
       - name: Try to run E+ with full path
         run: ${{ steps.eplus.outputs.energyplus_directory }}/energyplus -D ${{ steps.eplus.outputs.energyplus_directory }}/ExampleFiles/1ZoneUncontrolled.idf
       - name: Install API Helper
-        run: pip install energyplus_api_helpers
+        run: pip install -r requirements.txt
       - name: Try to run E+ from API
         run: python main.py ${{ steps.eplus.outputs.energyplus_directory }}
