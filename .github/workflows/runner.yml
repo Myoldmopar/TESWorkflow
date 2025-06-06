@@ -35,3 +35,13 @@ jobs:
         run: pip install -r requirements.txt
       - name: Try to run E+ from API
         run: python main.py ${{ steps.eplus.outputs.energyplus_directory }}
+      - name: Upload baseline.zip as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline
+          path: baseline.zip
+      - name: Upload secondary.zip as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline
+          path: secondary.zip
