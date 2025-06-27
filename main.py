@@ -25,15 +25,15 @@ api = helper.get_api_instance()
 state_1 = api.state_manager.new_state()
 state_2 = api.state_manager.new_state()
 
-idf_to_run = Path(helper.path_to_test_file('5ZoneAirCooled.idf'))
+idf_to_run = Path(helper.path_to_test_file('PlantLoadProfile_TESsizing.idf'))
 
 # create a directory to handle IDF->JSON conversion and even JSON modifications
 json_convert_dir = output_dir / 'json_convert'
 json_convert_dir.mkdir()
 copied_idf = json_convert_dir / idf_to_run.name
-converted_json_file = json_convert_dir / '5ZoneAirCooled.epJSON'
-baseline_json = json_convert_dir / '5ZoneAirCooledBase.epJSON'
-modified_json = json_convert_dir / '5ZoneAirCooledMod.epJSON'
+converted_json_file = json_convert_dir / 'PlantLoadProfile_TESsizing.epJSON'
+baseline_json = json_convert_dir / 'PlantLoadProfile_TESsizingBase.epJSON'
+modified_json = json_convert_dir / 'PlantLoadProfile_TESsizingMod.epJSON'
 print("Made JSON conversion directory and set up file paths.")
 
 # actually copy the IDF to the conversion directory and convert it to JSON
