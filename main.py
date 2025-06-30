@@ -84,7 +84,7 @@ base_space_3_times = []
 base_space_3_temp = []
 base_col_index = 0
 for base_col_index, b in enumerate(base_cols):
-    if b['Variable'] == 'SPACE3-1:Zone Air Temperature':
+    if b['Variable'] == 'PURCHASED COOLING:District Cooling Water Energy':
         break
 for row_num, row in enumerate(base_output['Rows']):
     time_stamp, data = next(iter(row.items()))
@@ -98,7 +98,7 @@ secondary_space_3_times = []
 secondary_space_3_temp = []
 secondary_col_index = 0
 for secondary_col_index, b in enumerate(secondary_cols):
-    if b['Variable'] == 'SPACE3-1:Zone Air Temperature':
+    if b['Variable'] == 'PURCHASED COOLING:District Cooling Water Energy':
         break
 for row_num, row in enumerate(secondary_output['Rows']):
     time_stamp, data = next(iter(row.items()))
@@ -109,9 +109,9 @@ for row_num, row in enumerate(secondary_output['Rows']):
 
 plt.plot(base_space_3_times, base_space_3_temp, label="Baseline")
 plt.plot(secondary_space_3_times, secondary_space_3_temp, label="Secondary")
-plt.title("SPACE3-1:Zone Air Temperature")
+plt.title("PURCHASED COOLING:District Cooling Water Energy")
 plt.xlabel("Time")
-plt.ylabel("Temperature")
+plt.ylabel("Joules")
 plt.theme("pro")
 plt.show()
 
