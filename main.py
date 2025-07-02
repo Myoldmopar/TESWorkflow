@@ -26,6 +26,7 @@ state_1 = api.state_manager.new_state()
 state_2 = api.state_manager.new_state()
 
 idf_to_run = Path(helper.path_to_test_file('PlantLoadProfile_TESsizing.idf'))
+weather_file = eplus_dir / 'WeatherData' / 'USA_IL_Chicago-OHare.Intl.AP.725300_TMY3.epw'
 
 # create a directory to handle IDF->JSON conversion and even JSON modifications
 json_convert_dir = output_dir / 'json_convert'
@@ -61,10 +62,9 @@ print("Modified JSON and rewrote to new file")
 # run EnergyPlus with the baseline and modified JSON files
 output_dir_baseline = output_dir / 'output_baseline'
 output_dir_secondary = output_dir / 'output_secondary'
-api.runtime.run_energyplus(state_1, ['-D', baseline_json.__str__(), '-d', output_dir_baseline.__str__()])
-api.runtime.run_energyplus(state_2, ['-D', modified_json.__str__(), '-d', output_dir_secondary.__str__()])
+api.runtime.run_energyplus(state_1, ['-r', '-w', weather_file.__str__(), '-D', baseline_json.__str__(), '-d', output_dir_baseline.__str__()])
+api.runtime.run_energyplus(state_2, ['-r', '-w', weather_file.__str__(), '-D', modified_json.__str__(), '-d', output_dir_secondary.__str__()])
 print("Ran EnergyPlus with baseline JSON input file.")
-
 
 def parse_eplus_timestamp(ts: str) -> datetime:
     date_part, time_part = ts.split()
@@ -76,47 +76,75 @@ def parse_eplus_timestamp(ts: str) -> datetime:
     else:
         return datetime.strptime(ts, "%m/%d %H:%M:%S")
 
-
 # grab the time series data from each output json
 base_output = loads((output_dir_baseline / 'eplusout_hourly.json').read_text())
 base_cols = base_output['Cols']
-base_space_3_times = []
-base_space_3_temp = []
-base_col_index = 0
-for base_col_index, b in enumerate(base_cols):
-    if b['Variable'] == 'PURCHASED COOLING:District Cooling Water Energy':
-        break
+base_times = []
+base_qdot = []
+
+# Find column indices for needed variables
+mass_flow_index = cp_index = tin_index = tout_index = None
+for idx, col in enumerate(base_cols):
+    if col['Variable'] == 'SUPPLY OUTLET NODE:System Node Mass Flow Rate':
+        mass_flow_index = idx
+    elif col['Variable'] == 'SUPPLY OUTLET NODE:System Node Specific Heat':
+        cp_index = idx
+    elif col['Variable'] == 'SUPPLY INLET NODE:System Node Temperature':
+        tin_index = idx
+    elif col['Variable'] == 'SUPPLY OUTLET NODE:System Node Temperature':
+        tout_index = idx
+
+assert None not in (mass_flow_index, cp_index, tin_index, tout_index), "Missing one or more required variables in baseline output"
+
 for row_num, row in enumerate(base_output['Rows']):
     time_stamp, data = next(iter(row.items()))
     time_stamp_dt = parse_eplus_timestamp(time_stamp)
-    # base_space_3_times.append(time_stamp_dt)
-    base_space_3_times.append(row_num)
-    base_space_3_temp.append(data[base_col_index])
+    m_dot = data[mass_flow_index]
+    cp = data[cp_index]
+    t_in = data[tin_index]
+    t_out = data[tout_index]
+    qdot = m_dot * cp * (t_in - t_out)
+    base_times.append(row_num)
+    base_qdot.append(qdot)
+
+# Same for secondary
 secondary_output = loads((output_dir_secondary / 'eplusout_hourly.json').read_text())
 secondary_cols = secondary_output['Cols']
-secondary_space_3_times = []
-secondary_space_3_temp = []
-secondary_col_index = 0
-for secondary_col_index, b in enumerate(secondary_cols):
-    if b['Variable'] == 'PURCHASED COOLING:District Cooling Water Energy':
-        break
+secondary_times = []
+secondary_qdot = []
+
+mass_flow_index = cp_index = tin_index = tout_index = None
+for idx, col in enumerate(secondary_cols):
+    if col['Variable'] == 'SUPPLY OUTLET NODE:System Node Mass Flow Rate':
+        mass_flow_index = idx
+    elif col['Variable'] == 'SUPPLY OUTLET NODE:System Node Specific Heat':
+        cp_index = idx
+    elif col['Variable'] == 'SUPPLY INLET NODE:System Node Temperature':
+        tin_index = idx
+    elif col['Variable'] == 'SUPPLY OUTLET NODE:System Node Temperature':
+        tout_index = idx
+
+assert None not in (mass_flow_index, cp_index, tin_index, tout_index), "Missing one or more required variables in secondary output"
+
 for row_num, row in enumerate(secondary_output['Rows']):
     time_stamp, data = next(iter(row.items()))
     time_stamp_dt = parse_eplus_timestamp(time_stamp)
-    # secondary_space_3_times.append(time_stamp_dt)
-    secondary_space_3_times.append(row_num)
-    secondary_space_3_temp.append(data[secondary_col_index])
+    m_dot = data[mass_flow_index]
+    cp = data[cp_index]
+    t_in = data[tin_index]
+    t_out = data[tout_index]
+    qdot = m_dot * cp * (t_in - t_out)
+    secondary_times.append(row_num)
+    secondary_qdot.append(qdot)
 
-plt.plot(base_space_3_times, base_space_3_temp, label="Baseline")
-plt.plot(secondary_space_3_times, secondary_space_3_temp, label="Secondary")
-plt.title("PURCHASED COOLING:District Cooling Water Energy")
+# Plot Qdot
+plt.plot(base_times, base_qdot, label="Baseline")
+plt.plot(secondary_times, secondary_qdot, label="Secondary")
+plt.title("Calculated Cooling Power (Q̇)")
 plt.xlabel("Time")
-plt.ylabel("Joules")
+plt.ylabel("Watts")  # since J/s
 plt.theme("pro")
 plt.show()
-
-# print(base_space_3_temp)
-# print(secondary_space_3_temp)
 
 if not local:
     make_archive('conversion', 'zip', root_dir=json_convert_dir)
