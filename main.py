@@ -25,6 +25,7 @@ api = helper.get_api_instance()
 state_1 = api.state_manager.new_state()
 state_2 = api.state_manager.new_state()
 
+# TODO: Copy the created json to the repo and erase these lines
 idf_to_run = Path(helper.path_to_test_file('PlantLoadProfile_TESsizing.idf'))
 weather_file = eplus_dir / 'WeatherData' / 'USA_IL_Chicago-OHare.Intl.AP.725300_TMY3.epw'
 
@@ -62,8 +63,8 @@ print("Modified JSON and rewrote to new file")
 # run EnergyPlus with the baseline and modified JSON files
 output_dir_baseline = output_dir / 'output_baseline'
 output_dir_secondary = output_dir / 'output_secondary'
-api.runtime.run_energyplus(state_1, ['-r', '-w', weather_file.__str__(), '-D', baseline_json.__str__(), '-d', output_dir_baseline.__str__()])
-api.runtime.run_energyplus(state_2, ['-r', '-w', weather_file.__str__(), '-D', modified_json.__str__(), '-d', output_dir_secondary.__str__()])
+api.runtime.run_energyplus(state_1, ['-r', '-w', weather_file.__str__(), baseline_json.__str__(), '-d', output_dir_baseline.__str__()])
+api.runtime.run_energyplus(state_2, ['-r', '-w', weather_file.__str__(), modified_json.__str__(), '-d', output_dir_secondary.__str__()])
 print("Ran EnergyPlus with baseline JSON input file.")
 
 def parse_eplus_timestamp(ts: str) -> datetime:
@@ -129,6 +130,8 @@ assert None not in (mass_flow_index, cp_index, tin_index, tout_index), "Missing 
 for row_num, row in enumerate(secondary_output['Rows']):
     time_stamp, data = next(iter(row.items()))
     time_stamp_dt = parse_eplus_timestamp(time_stamp)
+#    if row_num == 0:
+#        print(time_stamp_dt)
     m_dot = data[mass_flow_index]
     cp = data[cp_index]
     t_in = data[tin_index]
