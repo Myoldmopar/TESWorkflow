@@ -82,6 +82,7 @@ base_output = loads((output_dir_baseline / 'eplusout_hourly.json').read_text())
 base_cols = base_output['Cols']
 base_times = []
 base_qdot = []
+time_labels = []
 
 # Find column indices for needed variables
 mass_flow_index = cp_index = tin_index = tout_index = None
@@ -106,6 +107,7 @@ for row_num, row in enumerate(base_output['Rows']):
     t_out = data[tout_index]
     qdot = m_dot * cp * (t_in - t_out)
     base_times.append(row_num)
+    time_labels.append(time_stamp_dt.strftime("%m-%d %H:%M"))
     base_qdot.append(qdot)
 
 # Same for secondary
@@ -130,20 +132,20 @@ assert None not in (mass_flow_index, cp_index, tin_index, tout_index), "Missing 
 for row_num, row in enumerate(secondary_output['Rows']):
     time_stamp, data = next(iter(row.items()))
     time_stamp_dt = parse_eplus_timestamp(time_stamp)
-#    if row_num == 0:
-#        print(time_stamp_dt)
     m_dot = data[mass_flow_index]
     cp = data[cp_index]
     t_in = data[tin_index]
     t_out = data[tout_index]
     qdot = m_dot * cp * (t_in - t_out)
     secondary_times.append(row_num)
+    time_labels.append(time_stamp_dt.strftime("%m-%d %H:%M"))
     secondary_qdot.append(qdot)
 
 # Plot Qdot
 plt.plot(base_times, base_qdot, label="Baseline")
 plt.plot(secondary_times, secondary_qdot, label="Secondary")
 plt.title("Calculated Cooling Power (Q̇)")
+plt.xticks(base_times[::24], time_labels[::24])
 plt.xlabel("Time")
 plt.ylabel("Watts")  # since J/s
 plt.theme("pro")
