@@ -27,7 +27,7 @@ SimulationControl,
     NO,                      !- Do Zone Sizing Calculation
     NO,                      !- Do System Sizing Calculation
     NO,                      !- Do Plant Sizing Calculation
-    YES,                     !- Run Simulation for Sizing Periods
+    NO,                     !- Run Simulation for Sizing Periods
     YES,                     !- Run Simulation for Weather File Run Periods
     No,                      !- Do HVAC Sizing Simulation for Sizing Periods
     1;                       !- Maximum Number of HVAC Sizing Simulation Passes
@@ -130,8 +130,8 @@ RunPeriod,
     6,                       !- Begin Month
     1,                       !- Begin Day of Month
     ,                        !- Begin Year
-    8,                      !- End Month
-    31,                      !- End Day of Month
+    6,                      !- End Month
+    3,                      !- End Day of Month
     ,                        !- End Year
     Tuesday,                 !- Day of Week for Start Day
     Yes,                     !- Use Weather File Holidays and Special Days
