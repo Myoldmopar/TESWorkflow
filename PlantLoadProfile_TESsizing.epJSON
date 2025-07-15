@@ -371,8 +371,8 @@
             "begin_day_of_month": 1,
             "begin_month": 6,
             "day_of_week_for_start_day": "Tuesday",
-            "end_day_of_month": 31,
-            "end_month": 8,
+            "end_day_of_month": 3,
+            "end_month": 6,
             "use_weather_file_daylight_saving_period": "Yes",
             "use_weather_file_holidays_and_special_days": "Yes",
             "use_weather_file_rain_indicators": "Yes",
@@ -495,7 +495,7 @@
             "do_system_sizing_calculation": "No",
             "do_zone_sizing_calculation": "No",
             "maximum_number_of_hvac_sizing_simulation_passes": 1,
-            "run_simulation_for_sizing_periods": "Yes",
+            "run_simulation_for_sizing_periods": "No",
             "run_simulation_for_weather_file_run_periods": "Yes"
         }
     },

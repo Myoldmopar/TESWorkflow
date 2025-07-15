@@ -18,35 +18,32 @@ if len(argv) > 2 and argv[2] == 'local':
 else:
     output_dir = Path(__file__).parent
     local = False
-convert_input_format = eplus_dir / 'ConvertInputFormat'
 
 helper = EPlusAPIHelper(eplus_dir)
 api = helper.get_api_instance()
 state_1 = api.state_manager.new_state()
 state_2 = api.state_manager.new_state()
 
-# TODO: Copy the created json to the repo and erase these lines
+root_epjson = Path(__file__).parent / 'PlantLoadProfile_TESsizing.epJSON'
+if not root_epjson.exists():
+    raise FileNotFoundError("'PlantLoadProfile_TESsizing.epJSON' not found.")
 idf_to_run = Path(helper.path_to_test_file('PlantLoadProfile_TESsizing.idf'))
 weather_file = eplus_dir / 'WeatherData' / 'USA_IL_Chicago-OHare.Intl.AP.725300_TMY3.epw'
 
 # create a directory to handle IDF->JSON conversion and even JSON modifications
 json_convert_dir = output_dir / 'json_convert'
 json_convert_dir.mkdir()
-copied_idf = json_convert_dir / idf_to_run.name
-converted_json_file = json_convert_dir / 'PlantLoadProfile_TESsizing.epJSON'
+copied_epjson = json_convert_dir / 'PlantLoadProfile_TESsizing.epJSON'
+copy(root_epjson, copied_epjson)
+print("Copied EPJSON from root directory.")
 baseline_json = json_convert_dir / 'PlantLoadProfile_TESsizingBase.epJSON'
 modified_json = json_convert_dir / 'PlantLoadProfile_TESsizingMod.epJSON'
 print("Made JSON conversion directory and set up file paths.")
 
-# actually copy the IDF to the conversion directory and convert it to JSON
-copy(idf_to_run, json_convert_dir)
-call([convert_input_format, idf_to_run.name], shell=False, cwd=json_convert_dir)
-print("Converted IDF to baseline JSON file.")
-
 # now read in the JSON file that was created
-baseline_json_data = loads(converted_json_file.read_text())
-secondary_json_data = loads(converted_json_file.read_text())
-print("Read in JSON file from baseline IDF conversion.")
+baseline_json_data = loads(copied_epjson.read_text())
+secondary_json_data = loads(copied_epjson.read_text())
+print("Read in JSON file from root.")
 
 # write out the baseline file with any required modifications
 baseline_json_data['OutputControl:Files'] = {'OutputControl:Files 1': {'output_json': 'Yes'}}
