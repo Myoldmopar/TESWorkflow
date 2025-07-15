@@ -5,8 +5,8 @@ import plotext as plt
 from shutil import copy, make_archive, rmtree
 from subprocess import call
 from sys import argv
-
 from energyplus_api_helpers.import_helper import EPlusAPIHelper
+from collections import defaultdict
 
 eplus_dir = Path(argv[1])
 if len(argv) > 2 and argv[2] == 'local':
@@ -51,7 +51,7 @@ baseline_json_data['Output:JSON'] = {'Output:JSON 1': {'output_json': 'Yes', 'op
 baseline_json.write_text(dumps(baseline_json_data, indent=2))
 
 # write out the secondary file with all required modifications
-secondary_json_data['Timestep']['Timestep 1']['number_of_timesteps_per_hour'] = 10
+secondary_json_data['Timestep']['Timestep 1']['number_of_timesteps_per_hour'] = 10 # 6 minutes per timestep
 secondary_json_data['OutputControl:Files'] = {'OutputControl:Files 1': {'output_json': 'Yes'}}
 secondary_json_data['Output:JSON'] = {'Output:JSON 1': {'output_json': 'Yes', 'option_type': 'TimeSeries'}}
 modified_json.write_text(dumps(secondary_json_data, indent=4))
@@ -155,3 +155,29 @@ if not local:
     print("Zipped output_baseline directory.")
     make_archive('secondary', 'zip', root_dir=output_dir_secondary)
     print("Zipped output_dir_secondary directory.")
+
+# Integrate energy during peak hours
+Peak_start_hour = 12 # peak hours for summer starts at 12PM
+Peak_end_hour = 21 # peak hours for summer ends at 9PM
+Seconds_per_timestep = 360  # 6 minutes = 360 seconds
+
+# Store daily energy totals
+daily_peak_energy = defaultdict(float)
+
+# truncate time_labels to match secondary_qdot length, to multiply correctly secondary_qdot[i] * Seconds_per_timestep
+time_labels = time_labels[-len(secondary_qdot):] 
+
+for i, time_str in enumerate(time_labels):
+    dt = datetime.strptime(time_str, "%m-%d %H:%M")
+    hour = dt.hour
+
+    if Peak_start_hour <= hour < Peak_end_hour:
+        energy_joules = secondary_qdot[i] * Seconds_per_timestep
+        date_key = dt.strftime("%m-%d")
+        daily_peak_energy[date_key] += energy_joules
+
+# Print energy usage in kWh
+print("Daily Peak Energy Use (peak hours: 12PM – 9PM):")
+for date, energy_j in sorted(daily_peak_energy.items()):
+    energy_kwh = energy_j / (3600 * 1000)
+    print(f"{date}: {energy_kwh:.2f} kWh")
