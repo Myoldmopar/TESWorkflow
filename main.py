@@ -8,6 +8,21 @@ from sys import argv
 from energyplus_api_helpers.import_helper import EPlusAPIHelper
 from collections import defaultdict
 
+
+def calc_sensible_volume_gal(Q_joules, delta_T=5.0):
+    CP_WATER = 4186  # J/kg·K
+    DENSITY_WATER = 997  # kg/m³
+    volume_m3 = Q_joules / (DENSITY_WATER * CP_WATER * delta_T)
+    volume_gal = volume_m3 / 0.00378541
+    return volume_gal
+
+def calc_latent_volume_gal(Q_joules):
+    LF_ICE = 334000  # J/kg
+    DENSITY_ICE = 917  # kg/m³
+    volume_m3 = Q_joules / (DENSITY_ICE * LF_ICE)
+    volume_gal = volume_m3 / 0.00378541
+    return volume_gal
+
 eplus_dir = Path(argv[1])
 if len(argv) > 2 and argv[2] == 'local':
     output_dir = Path(__file__).parent / 'output'
@@ -51,7 +66,7 @@ baseline_json_data['Output:JSON'] = {'Output:JSON 1': {'output_json': 'Yes', 'op
 baseline_json.write_text(dumps(baseline_json_data, indent=2))
 
 # write out the secondary file with all required modifications
-secondary_json_data['Timestep']['Timestep 1']['number_of_timesteps_per_hour'] = 10 # 6 minutes per timestep
+secondary_json_data['Timestep']['Timestep 1']['number_of_timesteps_per_hour'] = 10
 secondary_json_data['OutputControl:Files'] = {'OutputControl:Files 1': {'output_json': 'Yes'}}
 secondary_json_data['Output:JSON'] = {'Output:JSON 1': {'output_json': 'Yes', 'option_type': 'TimeSeries'}}
 modified_json.write_text(dumps(secondary_json_data, indent=4))
@@ -159,7 +174,7 @@ if not local:
 # Integrate energy during peak hours
 Peak_start_hour = 12 # peak hours for summer starts at 12PM
 Peak_end_hour = 21 # peak hours for summer ends at 9PM
-Seconds_per_timestep = 360  # 6 minutes = 360 seconds
+Seconds_per_timestep = 360  # 'number_of_timesteps_per_hour' of secondary json data = 10,  6 minutes = 360 seconds
 
 # Store daily energy totals
 daily_peak_energy = defaultdict(float)
@@ -177,7 +192,19 @@ for i, time_str in enumerate(time_labels):
         daily_peak_energy[date_key] += energy_joules
 
 # Print energy usage in kWh
-print("Daily Peak Energy Use (peak hours: 12PM – 9PM):")
+print("\nDaily Peak Energy Use (peak hours: 12PM – 9PM):")
 for date, energy_j in sorted(daily_peak_energy.items()):
     energy_kwh = energy_j / (3600 * 1000)
     print(f"{date}: {energy_kwh:.2f} kWh")
+
+# Find the maximum daily peak energy use
+peak_day, peak_energy_j = max(daily_peak_energy.items(), key=lambda x: x[1])
+peak_energy_kwh = peak_energy_j / (3600 * 1000)
+print(f"\nMaximum Daily Peak Energy Use : {peak_day} = {peak_energy_kwh:.2f} kWh")
+
+# estimate tank sizes
+print("\nEstimated Tank Sizes:")
+sensible_gal = calc_sensible_volume_gal(peak_energy_j)
+latent_gal = calc_latent_volume_gal(peak_energy_j)
+print(f"Estimated Water Tank (Sensible) Size: {sensible_gal:.2f} gal")
+print(f"Estimated Ice Tank (Latent) Size: {latent_gal:.2f} gal")
