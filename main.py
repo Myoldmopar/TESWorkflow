@@ -9,15 +9,15 @@ from energyplus_api_helpers.import_helper import EPlusAPIHelper
 from collections import defaultdict
 
 
-def calc_sensible_volume_gal(Q_joules, delta_T=5.0):
+def calc_sensible_volume_gal(Q_joules, delta_T=5.0): #default delta_T is 5C, typical range for Chilled Water TES Delta_T
     CP_WATER = 4186  # J/kg·K
-    DENSITY_WATER = 997  # kg/m³
+    DENSITY_WATER = 997  # kg/m3 at 25C
     volume_m3 = Q_joules / (DENSITY_WATER * CP_WATER * delta_T)
     volume_gal = volume_m3 / 0.00378541
     return volume_gal
 
 def calc_latent_volume_gal(Q_joules):
-    LF_ICE = 334000  # J/kg
+    LF_ICE = 334000  # J/kg, latent heat of fusion for ice
     DENSITY_ICE = 917  # kg/m³
     volume_m3 = Q_joules / (DENSITY_ICE * LF_ICE)
     volume_gal = volume_m3 / 0.00378541
