@@ -83,11 +83,11 @@ def parse_eplus_timestamp(ts: str) -> datetime:
     date_part, time_part = ts.split()
     hour, minute, second = map(int, time_part.split(':'))
     if hour == 24:
-        dt = datetime.strptime(date_part, "%m/%d")
+        dt = datetime.strptime("2025/" + date_part, "%Y/%m/%d")
         dt += timedelta(days=1)
         return dt.replace(hour=0, minute=minute, second=second)
     else:
-        return datetime.strptime(ts, "%m/%d %H:%M:%S")
+        return datetime.strptime("2025/" + ts, "%Y/%m/%d %H:%M:%S")
 
 # grab the time series data from each output json
 base_output = loads((output_dir_baseline / 'eplusout_hourly.json').read_text())
@@ -156,10 +156,10 @@ for row_num, row in enumerate(secondary_output['Rows']):
 # Plot Qdot
 plt.plot(base_times, base_qdot, label="Baseline")
 plt.plot(secondary_times, secondary_qdot, label="Secondary")
-plt.title("Calculated Cooling Power (Q̇)")
+plt.title("Calculated Cooling Power (Qdot)")
 plt.xticks(base_times[::24], time_labels[::24])
 plt.xlabel("Time")
-plt.ylabel("Watts")  # since J/s
+plt.ylabel("Watts")  # J/s
 plt.theme("pro")
 plt.show()
 
