@@ -10,9 +10,8 @@ from collections import defaultdict
 import sys
 import io
 
-#  Set the encoding for stdout to utf-8 for windows
-if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+# force utf-8 stdout for plotext compatibility for windwows
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 def calc_sensible_volume_gal(Q_joules, delta_T=5.0): #default delta_T is 5C, typical range for Chilled Water TES Delta_T
     CP_WATER = 4184  # J/kg·K
