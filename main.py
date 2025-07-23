@@ -214,3 +214,40 @@ sensible_gal = calc_sensible_volume_gal(peak_energy_j)
 latent_gal = calc_latent_volume_gal(peak_energy_j)
 print(f"Estimated Water Tank (Sensible) Size: {sensible_gal:.2f} gal")
 print(f"Estimated Ice Tank (Latent) Size: {latent_gal:.2f} gal")
+
+# Estimate required chiller capacity to recharge tank during off-peak hours
+print("\nChiller Sizing Based on Off-Peak Recharging")
+
+offpeak_hours = list(range(0, Peak_start_hour)) + list(range(Peak_end_hour, 24))
+offpeak_qdot = []
+offpeak_charging_qdot = []
+offpeak_times = []
+
+for i, time_str in enumerate(time_labels):
+    dt = datetime.strptime(time_str, "%m-%d %H:%M")
+    hour = dt.hour
+    if hour in offpeak_hours:
+        offpeak_times.append(time_str)
+        # Building cooling load during off-peak hours
+        base_load = secondary_qdot[i] 
+        offpeak_qdot.append(base_load)
+
+        # Calculate average charging power needed to recharge the tank during off-peak hours
+        # Assume the tank needs to be fully recharged during off-peak hours
+        avg_charging_power = peak_energy_j / (len(offpeak_times) * Seconds_per_timestep)
+        
+         # Total chiller power needed = building load + tank recharge
+        total_chiller_power = base_load + avg_charging_power
+        offpeak_charging_qdot.append(total_chiller_power)
+
+# Estimate maximum chiller power required
+max_chiller_power_kw = max(offpeak_charging_qdot) / 1000.0
+print(f"Estimated Maximum Chiller Power Needed (including recharge and load): {max_chiller_power_kw:.2f} kW")
+
+plt.clear_data()
+plt.plot(range(len(offpeak_qdot)), [q / 1000 for q in offpeak_qdot], label="Off-peak Load Only")
+plt.plot(range(len(offpeak_charging_qdot)), [q / 1000 for q in offpeak_charging_qdot], label="Off-peak Load + Recharge")
+plt.title("Off-Peak Chiller Load (kW)")
+plt.xlabel("Time Index")
+plt.ylabel("Power (kW)")
+plt.show()
