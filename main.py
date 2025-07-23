@@ -203,6 +203,11 @@ peak_day, peak_energy_j = max(daily_peak_energy.items(), key=lambda x: x[1])
 peak_energy_kwh = peak_energy_j / (3600 * 1000)
 print(f"\nMaximum Daily Peak Energy Use : {peak_day} = {peak_energy_kwh:.2f} kWh")
 
+# Find the maximum Qdot
+max_qdot_watts = max(secondary_qdot)
+max_qdot_kw = max_qdot_watts / 1000
+print(f"\nMaximum Cooling Power: {max_qdot_kw:.2f} kW")
+
 # estimate tank sizes
 print("\nEstimated Tank Sizes:")
 sensible_gal = calc_sensible_volume_gal(peak_energy_j)
