@@ -208,15 +208,25 @@ max_qdot_watts = max(secondary_qdot)
 max_qdot_kw = max_qdot_watts / 1000
 print(f"\nMaximum Cooling Power: {max_qdot_kw:.2f} kW")
 
+# Find the Qdot during peak hours
+peak_qdot_list = []
+for i, time_str in enumerate(time_labels):
+    dt = datetime.strptime(time_str, "%m-%d %H:%M")
+    hour = dt.hour
+    date_key = dt.strftime("%m-%d")
+    if Peak_start_hour <= hour < Peak_end_hour and date_key == peak_day:
+        peak_qdot_list.append(secondary_qdot[i])
+
 # estimate tank sizes
 print("\nEstimated Tank Sizes:")
+
 sensible_gal = calc_sensible_volume_gal(peak_energy_j)
 latent_gal = calc_latent_volume_gal(peak_energy_j)
 print(f"Estimated Water Tank (Sensible) Size: {sensible_gal:.2f} gal")
 print(f"Estimated Ice Tank (Latent) Size: {latent_gal:.2f} gal")
 
 # Estimate required chiller capacity to recharge tank during off-peak hours
-print("\nChiller Sizing Based on Off-Peak Recharging")
+print("\nChiller Sizing Considering Off-Peak Recharging and Building Load:")
 
 offpeak_hours = list(range(0, Peak_start_hour)) + list(range(Peak_end_hour, 24))
 offpeak_qdot = []
@@ -229,15 +239,15 @@ for i, time_str in enumerate(time_labels):
     if hour in offpeak_hours:
         offpeak_times.append(time_str)
         # Building cooling load during off-peak hours
-        base_load = secondary_qdot[i] 
-        offpeak_qdot.append(base_load)
+        building_load = secondary_qdot[i] 
+        offpeak_qdot.append(building_load)
 
         # Calculate average charging power needed to recharge the tank during off-peak hours
         # Assume the tank needs to be fully recharged during off-peak hours
         avg_charging_power = peak_energy_j / (len(offpeak_times) * Seconds_per_timestep)
         
          # Total chiller power needed = building load + tank recharge
-        total_chiller_power = base_load + avg_charging_power
+        total_chiller_power = building_load + avg_charging_power
         offpeak_charging_qdot.append(total_chiller_power)
 
 # Estimate maximum chiller power required
@@ -248,6 +258,38 @@ plt.clear_data()
 plt.plot(range(len(offpeak_qdot)), [q / 1000 for q in offpeak_qdot], label="Off-peak Load Only")
 plt.plot(range(len(offpeak_charging_qdot)), [q / 1000 for q in offpeak_charging_qdot], label="Off-peak Load + Recharge")
 plt.title("Off-Peak Chiller Load (kW)")
-plt.xlabel("Time Index")
+plt.xlabel("Time")
 plt.ylabel("Power (kW)")
 plt.show()
+
+# Check tank energy depletion with threshold
+print("\nTank Energy Depletion Check (End of Peak Period):")
+
+# Initial energy in the tank
+initial_energy_j = peak_energy_j
+remaining_energy_j_list = []
+
+# Calculate remaining energy after each timestep
+for qdot in peak_qdot_list:
+    energy_used = qdot * Seconds_per_timestep
+    initial_energy_j -= energy_used
+    remaining_energy_j_list.append(initial_energy_j)
+
+# Final remaining energy
+final_energy_j = remaining_energy_j_list[-1]
+final_energy_kj = final_energy_j / 1000.0
+
+# Define a 5% minimum charge threshold
+threshold_ratio = 0.05
+threshold_energy_j = peak_energy_j * threshold_ratio
+threshold_energy_kj = threshold_energy_j / 1000.0
+
+print(f"Final Tank Energy: {final_energy_kj:.2f} kJ ({final_energy_j} J)")
+print(f"5% Threshold Energy: {threshold_energy_kj:.2f} kJ")
+
+if final_energy_j <= 0:
+    print("Warning: Threshold energy is zero or negative. Consider adjusting tank size.")
+elif final_energy_j <= threshold_energy_j:
+    print("Tank energy was sufficiently depleted during the peak period.")
+else:
+    print("Tank energy was not fully utilized. Consider adjusting tank size or charging strategy.")
