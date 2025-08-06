@@ -21,13 +21,13 @@ def calc_sensible_volume_gal(Q_joules, delta_T=5.0):
     return volume_gal
 
 def calc_latent_volume_gal(Q_joules):
-    LF_ICE = 334000  # J/kg latent heat of fusion for ice
+    LF_ICE = 334000  # J/kg latent heat of fusion for ice 
     DENSITY_ICE = 917  # kg/m3 at 0C
     volume_m3 = Q_joules / (DENSITY_ICE * LF_ICE)
     volume_gal = volume_m3 / 0.00378541
     return volume_gal
 
-def parse_eplus_timestamp(ts: str) -> datetime:
+def parse_energyplus_timestamp(ts: str) -> datetime:
     date_part, time_part = ts.split()
     hour, minute, second = map(int, time_part.split(':'))
     if hour == 24:
@@ -37,7 +37,7 @@ def parse_eplus_timestamp(ts: str) -> datetime:
     else:
         return datetime.strptime("2025/" + ts, "%Y/%m/%d %H:%M:%S")
 
-def prepare_directories(eplus_dir: Path, local: bool):
+def prepare_directory(eplus_dir: Path, local: bool):
     if local:
         output_dir = Path(__file__).parent / 'output'
         if output_dir.exists():
@@ -85,7 +85,7 @@ def run_energyplus_simulations(api, state_1, state_2, weather_file, baseline_jso
 
     return output_dir_baseline, output_dir_secondary
 
-def parse_qdot_from_output(output_path):
+def calc_qdot_from_output(output_path):
     output_json = loads(output_path.read_text())
     cols = output_json['Cols']
 
@@ -108,7 +108,7 @@ def parse_qdot_from_output(output_path):
 
     for row_num, row in enumerate(output_json['Rows']):
         time_stamp, data = next(iter(row.items()))
-        time_stamp_dt = parse_eplus_timestamp(time_stamp)
+        time_stamp_dt = parse_energyplus_timestamp(time_stamp)
         m_dot = data[mass_flow_index]
         cp = data[cp_index]
         t_in = data[tin_index]
@@ -181,7 +181,7 @@ def main():
     eplus_dir = Path(argv[1])
     local = len(argv) > 2 and argv[2].lower() == 'local'
 
-    output_dir = prepare_directories(eplus_dir, local)
+    output_dir = prepare_directory(eplus_dir, local)
 
     helper = EPlusAPIHelper(eplus_dir)
     api = helper.get_api_instance()
@@ -196,8 +196,8 @@ def main():
         api, state_1, state_2, weather_file, baseline_json, modified_json, output_dir
     )
 
-    base_times, base_qdot, base_time_labels = parse_qdot_from_output(output_dir_baseline / 'eplusout_hourly.json')
-    sec_times, sec_qdot, sec_time_labels = parse_qdot_from_output(output_dir_secondary / 'eplusout_hourly.json')
+    base_times, base_qdot, base_time_labels = calc_qdot_from_output(output_dir_baseline / 'eplusout_hourly.json')
+    sec_times, sec_qdot, sec_time_labels = calc_qdot_from_output(output_dir_secondary / 'eplusout_hourly.json')
 
     # Plot cooling power comparison
     plt.plot(base_times, base_qdot, label="Baseline")
